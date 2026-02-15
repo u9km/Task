@@ -1,4 +1,4 @@
-name: Build iOS Framework
+name: Build iOS Framework (Pro Fix)
 
 on:
   push:
@@ -7,75 +7,54 @@ on:
 jobs:
   build:
     runs-on: macos-14
+
     env:
       FRAMEWORK_NAME: ShadowMaster
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare Folders
+      - name: 🔧 Fix Broken Source (Pro Way)
         run: |
-          mkdir -p build/${FRAMEWORK_NAME}.framework/Headers
-          mkdir -p build/${FRAMEWORK_NAME}.framework/Modules
-          mkdir -p output
+          # 1. إصلاح تكرار التعريفات في SHADOW MASTER v11.m
+          sed -i '' '/@implementation MemoryExploiter/,/@end/d' "SHADOW MASTER v11.m" || true
+          sed -i '' '/@implementation BehaviorSpoofer/,/@end/d' "SHADOW MASTER v11.m" || true
+          # أضف باقي الـ implementations هنا إذا لزم الأمر
+          
+          # 2. إصلاح Swizzling Class Reference (خطأ كلاس محجوز)
+          sed -i '' 's/Class class = \[self class\];/Class cls = \[self class\];/g' "SHADOW MASTER v11.m" || true
+          sed -i '' 's/class_getInstanceMethod(class,/class_getInstanceMethod(cls,/g' "SHADOW MASTER v11.m" || true
 
-      - name: Create Public Header
-        run: |
-          echo '#import <Foundation/Foundation.h>' > build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
-          echo '@interface ShadowMasterCore : NSObject' >> build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
-          echo '+ (instancetype)sharedInstance;' >> build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
-          echo '@end' >> build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
+          # 3. Fix enums in ShadowUI
+          sed -i '' 's/preferredStyle:1/preferredStyle:UIAlertControllerStyleAlert/g' ShadowUI.m || true
+          sed -i '' 's/style:0/style:UIAlertActionStyleDefault/g' ShadowUI.m || true
 
-      - name: Create module.modulemap
+      - name: 🚀 Build Framework
         run: |
-          echo "framework module ${FRAMEWORK_NAME} {" > build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
-          echo "  umbrella header \"${FRAMEWORK_NAME}.h\"" >> build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
-          echo "  export *" >> build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
-          echo "}" >> build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
+          mkdir -p build
 
-      - name: Build Binary
-        run: |
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 
           clang++ \
             -arch arm64 \
             -dynamiclib \
-            -install_name @rpath/${FRAMEWORK_NAME}.framework/${FRAMEWORK_NAME} \
             -x objective-c++ \
             -std=c++17 \
             -isysroot "$SDK_PATH" \
             -miphoneos-version-min=14.0 \
-            -O2 \
+            -O3 \
             -fobjc-arc \
-            -fmodules \
             -Wno-error \
             "SHADOW MASTER v11.m" \
             ShadowUI.m \
             -framework Foundation \
             -framework UIKit \
+            -framework Security \
             -lc++ \
-            -o build/${FRAMEWORK_NAME}.framework/${FRAMEWORK_NAME}
+            -o build/lib${FRAMEWORK_NAME}.dylib
 
-      - name: Generate Info.plist
-        run: |
-          echo '<?xml version="1.0" encoding="UTF-8"?>' > build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo '<plist version="1.0">' >> build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo '<dict>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo '<key>CFBundleExecutable</key>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo "<string>${FRAMEWORK_NAME}</string>" >> build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo '<key>CFBundlePackageType</key>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo '<string>FMWK</string>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo '</dict>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
-          echo '</plist>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
-
-      - name: Create XCFramework
-        run: |
-          xcodebuild -create-xcframework \
-            -framework build/${FRAMEWORK_NAME}.framework \
-            -output output/${FRAMEWORK_NAME}.xcframework
-
-      - name: Upload Artifact
+      - name: 📦 Upload
         uses: actions/upload-artifact@v4
         with:
           name: ShadowMaster_Framework
-          path: output/${FRAMEWORK_NAME}.xcframework
+          path: build/libShadowMaster.dylib
