@@ -11,7 +11,7 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Create ShadowUI.m
+      - name: Prepare ShadowUI.m
         run: |
           cat <<EOF > "ShadowUI.m"
           #import <Foundation/Foundation.h>
@@ -48,20 +48,27 @@ jobs:
           @end
 
           __attribute__((constructor))
-          static void ui_init() {
+          static void shadow_ui_init() {
               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  [ShadowUI alert:@"ShadowMaster UI" msg:@"✅ UI Loaded Separately\n🛡️ Protection Linked"];
+                  [ShadowUI alert:@"ShadowMaster v11" msg:@"✅ UI Loaded Successfully\n🛡️ Protection Linked"];
               });
           }
           EOF
 
+      - name: Patch Shadow Master Source
+        run: |
+          # إضافة تعريفات الكلاسات المفقودة فقط في بداية الملف دون تكرار الـ Implementation
+          sed -i '' '1i\
+          @class PlayerData, AimData, MovementData, VisionData, PhysicsData, MoveConstraints, ShotData, CheatPrediction;\
+          #import <CoreML/CoreML.h>\
+          ' "SHADOW MASTER v11.m"
+
       - name: Generate Project
         run: xcodegen generate
 
-      - name: Build Dylib (The Fix)
+      - name: Build Dylib
         run: |
           mkdir -p output
-          # استخدام وسوم تخطي التوقيع والربط المتقدم لمنع Error 65
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
           -configuration Release \
@@ -70,14 +77,12 @@ jobs:
           clean build \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGN_IDENTITY="" \
-          AD_HOC_CODE_SIGNING_ALLOWED=YES \
           EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
           GENERATE_TEXT_BASED_STUBS=NO \
-          OTHER_CFLAGS="-Wno-everything"
+          OTHER_CFLAGS="-Wno-everything -Wno-objc-interface-ivars"
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster-Combined-Dylib
+          name: ShadowMaster-Dylib
           path: output/ShadowMaster.dylib
