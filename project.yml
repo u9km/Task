@@ -13,19 +13,12 @@ targets:
       - framework: UIKit.framework
       - framework: CoreML.framework
       - framework: Security.framework
+      - framework: CoreVideo.framework
+      - framework: CoreImage.framework
     settings:
       ENABLE_BITCODE: NO
       PRODUCT_NAME: ShadowMaster
-      # --- حلول برمجية يتم حقنها أثناء البناء ---
-      OTHER_CFLAGS: >
-        $(inherited)
-        -D'interface=class'
-        -Wno-everything
-        -fobjc-arc
-      OTHER_LDFLAGS: >
-        $(inherited)
-        -undefined dynamic_lookup
-        -all_load
-      # إجبار المترجم على قبول الأكواد غير المكتملة
-      GCC_TREAT_WARNINGS_AS_ERRORS: NO
-      CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: YES
+      CLANG_ENABLE_MODULES: YES
+      WARNING_CFLAGS: "-Wno-everything"
+      OTHER_LDFLAGS: $(inherited) -undefined dynamic_lookup -all_load
+      GCC_DYNAMIC_NO_PIC: NO
