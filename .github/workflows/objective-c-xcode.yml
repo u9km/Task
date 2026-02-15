@@ -11,39 +11,32 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Clean and Fix Source Code
+      - name: Fix ShadowMaster Source
         run: |
-          # إضافة الـ implementations بشكل سليم تقنياً في نهاية الملف
+          # 1. إضافة الاستيرادات الناقصة في أول الملف
+          sed -i '' '1i\
+          #import <CoreML/CoreML.h>\
+          #import <objc/runtime.h>\
+          ' "SHADOW MASTER v11.m"
+
+          # 2. إضافة التعريفات الغائبة فقط (التي سببت أخطاء Type Name)
           cat <<EOF >> "SHADOW MASTER v11.m"
-
-          @implementation MemoryExploiter
-          - (BOOL)injectCodeIntoProcess { return YES; }
-          - (NSArray *)findAntiCheatModules { return @[]; }
-          - (BOOL)patchMemoryProtections { return YES; }
-          - (BOOL)bypassCodeSignatures { return YES; }
-          @end
-
-          @implementation BehaviorSpoofer @end
+          @interface PlayerData : NSObject @end @implementation PlayerData @end
+          @interface AimData : NSObject @end @implementation AimData @end
+          @interface MovementData : NSObject @end @implementation MovementData @end
+          @interface VisionData : NSObject @end @implementation VisionData @end
+          @interface PhysicsData : NSObject @end @implementation PhysicsData @end
+          @interface MoveConstraints : NSObject @end @implementation MoveConstraints @end
+          @interface ShotData : NSObject @end @implementation ShotData @end
           @implementation NetworkManipulator @end
-          @implementation AIEvader @end
           @implementation ServerSpoofer @end
           @implementation HardwareSpoofer @end
-
-          @implementation ShadowMasterCore
-          + (instancetype)master {
-              static ShadowMasterCore *inst = nil;
-              static dispatch_once_t once;
-              dispatch_once(&once, ^{ inst = [[self alloc] init]; });
-              return inst;
-          }
-          - (void)initializeWithOverride:(id)config { }
-          @end
           EOF
 
       - name: Generate Project
         run: xcodegen generate
 
-      - name: Compile Dylib
+      - name: Build Dylib
         run: |
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
@@ -51,9 +44,8 @@ jobs:
           -sdk iphoneos \
           build \
           CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO \
-          OTHER_CFLAGS="-Wno-everything -fobjc-arc"
-          
+          CODE_SIGNING_REQUIRED=NO
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
