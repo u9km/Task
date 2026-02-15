@@ -1,9 +1,33 @@
 // =============== نظام السيد الظل - العكس الكامل لنظام مكافحة الغش ===============
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 #import <mach-o/dyld.h>
 #import <sys/mman.h>
+
+// إضافة تعريفات فارغة للأصناف التي يستخدمها الكود لمنع خطأ "Undefined"
+@interface MemoryExploiter : NSObject @end
+@implementation MemoryExploiter @end
+
+@interface BehaviorSpoofer : NSObject @end
+@implementation BehaviorSpoofer @end
+
+@interface AIEvader : NSObject @end
+@implementation AIEvader @end
+
+@implementation ShadowMasterCore
++ (instancetype)master {
+    static ShadowMasterCore *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ instance = [[self alloc] init]; });
+    return instance;
+}
+- (void)initializeWithOverride:(NSDictionary *)config {
+    NSLog(@"Shadow Master Initialized");
+}
+@end
+
 
 // ================================================
 // 🎭 1. النظام الأساسي المعكوس
