@@ -1,24 +1,12 @@
 name: ShadowMasterProject
-options:
-  bundleIdPrefix: com.shadow.v11
 targets:
   ShadowMaster:
     type: library.dynamic
     platform: iOS
     deploymentTarget: "14.0"
     sources:
-      - path: "SHADOW MASTER v11.m"
-    frameworks:
-      - framework: Foundation.framework
-      - framework: UIKit.framework
-      - framework: CoreML.framework
-      - framework: Security.framework
-      - framework: CoreVideo.framework
-      - framework: CoreImage.framework
+      - "SHADOW MASTER v11.m"
+      - "ShadowUI.m"
     settings:
-      ENABLE_BITCODE: NO
       PRODUCT_NAME: ShadowMaster
-      CLANG_ENABLE_MODULES: YES
-      WARNING_CFLAGS: "-Wno-everything"
-      OTHER_LDFLAGS: $(inherited) -undefined dynamic_lookup -all_load
-      GCC_DYNAMIC_NO_PIC: NO
+      CLANG_ENABLE_OBJC_ARC: YES
