@@ -18,11 +18,11 @@ jobs:
           #import <UIKit/UIKit.h>
 
           @interface ShadowUI : NSObject
-          + (void)alert:(NSString *)title msg:(NSString *)msg;
+          + (void)showSimpleAlert;
           @end
 
           @implementation ShadowUI
-          + (void)alert:(NSString *)title msg:(NSString *)msg {
+          + (void)showSimpleAlert {
               dispatch_async(dispatch_get_main_queue(), ^{
                   UIWindow *window = nil;
                   if (@available(iOS 13.0, *)) {
@@ -35,8 +35,8 @@ jobs:
                   }
                   if (!window) window = [UIApplication sharedApplication].keyWindow;
 
-                  UIAlertController *a = [UIAlertController alertControllerWithTitle:title 
-                                           message:msg 
+                  UIAlertController *a = [UIAlertController alertControllerWithTitle:@"ShadowMaster v11" 
+                                           message:@"✅ UI & Protection Loaded\nStatus: Stealth Active" 
                                            preferredStyle:UIAlertControllerStyleAlert];
                   [a addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
                   
@@ -50,20 +50,14 @@ jobs:
           __attribute__((constructor))
           static void shadow_ui_init() {
               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 12 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  [ShadowUI alert:@"ShadowMaster v11" msg:@"✅ UI & Protection Loaded Successfully"];
+                  [ShadowUI showSimpleAlert];
               });
           }
           EOF
 
-      - name: Clean Original File From Duplicates
+      - name: Clean Original File
         run: |
-          # هذا السطر سيقوم بحذف أي سطر يحتوي على @implementation أو @interface أضفناه سابقاً بالخطأ
-          # لترك الملف الأصلي نظيفاً للمترجم
-          sed -i '' '/@implementation MemoryExploiter/d' "SHADOW MASTER v11.m"
-          sed -i '' '/@implementation BehaviorSpoofer/d' "SHADOW MASTER v11.m"
-          sed -i '' '/@implementation ShadowMasterCore/d' "SHADOW MASTER v11.m"
-          
-          # إضافة الاستيرادات الضرورية فقط في أول سطر
+          # تنظيف أي محاولات حقن سابقة قد تسبب تكرار
           sed -i '' '1i\
           #import <Foundation/Foundation.h>\
           #import <UIKit/UIKit.h>\
@@ -85,7 +79,8 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO \
           EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
-          OTHER_CFLAGS="-Wno-everything -D'interface=class'"
+          GENERATE_TEXT_BASED_STUBS=NO \
+          OTHER_CFLAGS="-Wno-everything" 
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
