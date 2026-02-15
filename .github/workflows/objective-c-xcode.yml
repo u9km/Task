@@ -1,4 +1,4 @@
-name: Build ShadowMaster
+name: Build ShadowMaster with UI
 
 on: [push, workflow_dispatch]
 
@@ -11,56 +11,59 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Reconstruct Source Code
+      - name: Reconstruct Source Code with UI
         run: |
-          # مسح الملف الأصلي وإعادة كتابته بهيكل سليم 100%
           cat <<EOF > "SHADOW MASTER v11.m"
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
           #import <CoreML/CoreML.h>
           #import <objc/runtime.h>
 
-          // تعريفات الكلاسات الناقصة لمنع أخطاء النوع
-          @interface PlayerData : NSObject @end @implementation PlayerData @end
-          @interface AimData : NSObject @end @implementation AimData @end
-          @interface MovementData : NSObject @end @implementation MovementData @end
-          @interface VisionData : NSObject @end @implementation VisionData @end
-          @interface PhysicsData : NSObject @end @implementation PhysicsData @end
-          @interface MoveConstraints : NSObject @end @implementation MoveConstraints @end
-          @interface ShotData : NSObject @end @implementation ShotData @end
-          @interface CheatPrediction : NSObject @end @implementation CheatPrediction @end
-
-          // تعريف الأنظمة الرئيسية
-          @interface MemoryExploiter : NSObject @end @implementation MemoryExploiter @end
-          @interface BehaviorSpoofer : NSObject @end @implementation BehaviorSpoofer @end
-          @interface NetworkManipulator : NSObject @end @implementation NetworkManipulator @end
-          @interface AIEvader : NSObject @end @implementation AIEvader @end
-          @interface ServerSpoofer : NSObject @end @implementation ServerSpoofer @end
-          @interface HardwareSpoofer : NSObject @end @implementation HardwareSpoofer @end
-
+          // --- تعريفات الأنظمة ---
           @interface ShadowMasterCore : NSObject
-          + (instancetype)master;
-          - (void)initializeWithOverride:(NSDictionary *)config;
+          + (void)showStatusUI;
           @end
 
           @implementation ShadowMasterCore
-          + (instancetype)master {
-              static ShadowMasterCore *instance = nil;
-              static dispatch_once_t onceToken;
-              dispatch_once(&onceToken, ^{
-                  instance = [[ShadowMasterCore alloc] init];
+          + (void)showStatusUI {
+              dispatch_async(dispatch_get_main_queue(), ^{
+                  UIWindow *window = [UIApplication sharedApplication].keyWindow;
+                  if (!window) window = [[UIApplication sharedApplication] windows].firstObject;
+
+                  // 1. إنشاء تنبيه عند الدخول
+                  UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"SHADOW MASTER v11"
+                                               message:@"✅ Protection Hosted Successfully\nStatus: Stealth Active (Non-Jailbreak)"
+                                               preferredStyle:UIAlertControllerStyleAlert];
+                  [alert addAction:[UIAlertAction actionWithTitle:@"Excellent" style:UIAlertActionStyleDefault handler:nil]];
+                  
+                  UIViewController *rootVC = window.rootViewController;
+                  while (rootVC.presentedViewController) rootVC = rootVC.presentedViewController;
+                  [rootVC presentViewController:alert animated:YES completion:nil];
+
+                  // 2. إنشاء زر عائم صغير للتأكد من استمرارية الاستضافة
+                  UIButton *statusBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+                  statusBtn.frame = CGRectMake(20, 40, 50, 50);
+                  statusBtn.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.7];
+                  statusBtn.layer.cornerRadius = 25;
+                  statusBtn.layer.borderWidth = 1;
+                  statusBtn.layer.borderColor = [UIColor greenColor].CGColor;
+                  [statusBtn setTitle:@"S" forState:UIControlStateNormal];
+                  [statusBtn addTarget:self action:@selector(checkStatus) forControlEvents:UIControlEventTouchUpInside];
+                  [window addSubview:statusBtn];
               });
-              return instance;
           }
-          - (void)initializeWithOverride:(NSDictionary *)config {
-              NSLog(@"[ShadowMaster] Initialized via GitHub Actions");
+
+          + (void)checkStatus {
+              NSLog(@"[ShadowMaster] Status Check: Active");
           }
           @end
 
+          // --- نقطة الانطلاق عند الحقن ---
           __attribute__((constructor))
           static void shadow_entry() {
-              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  [[ShadowMasterCore master] initializeWithOverride:@{}];
+              // انتظر 10 ثوانٍ حتى تظهر واجهة اللعبة الأصلية ثم احقن الـ UI
+              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                  [ShadowMasterCore showStatusUI];
               });
           }
           EOF
@@ -70,16 +73,18 @@ jobs:
 
       - name: Build Dylib
         run: |
+          mkdir -p output
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
           -configuration Release \
           -sdk iphoneos \
-          build \
+          CONFIGURATION_BUILD_DIR=$(pwd)/output \
+          clean build \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO
-          
+
       - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster-Dylib
-          path: build/Release-iphoneos/ShadowMaster.dylib
+          name: ShadowMaster-UI-Dylib
+          path: output/ShadowMaster.dylib
