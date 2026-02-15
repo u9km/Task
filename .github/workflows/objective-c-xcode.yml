@@ -1,4 +1,4 @@
-name: Build iOS Framework (Auto Fix Stable)
+name: Build iOS Framework (Stable)
 
 on:
   push:
@@ -14,76 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🔧 Auto Fix Source Files
+      - name: 🔧 Replace Broken Source
         run: |
-          echo "Rebuilding SHADOW MASTER v11.m safely..."
+          rm -f "SHADOW MASTER v11.m"
 
-          cat > "SHADOW MASTER v11.m" <<'EOF'
-#import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
+          echo '#import <Foundation/Foundation.h>' >> "SHADOW MASTER v11.m"
+          echo '#import <UIKit/UIKit.h>' >> "SHADOW MASTER v11.m"
+          echo '' >> "SHADOW MASTER v11.m"
+          echo '@class NetworkManipulator;' >> "SHADOW MASTER v11.m"
+          echo '@class ServerSpoofer;' >> "SHADOW MASTER v11.m"
+          echo '@class HardwareSpoofer;' >> "SHADOW MASTER v11.m"
+          echo '' >> "SHADOW MASTER v11.m"
+          echo '@interface ShadowMasterCore : NSObject' >> "SHADOW MASTER v11.m"
+          echo '@property (nonatomic,strong) NetworkManipulator *networkManipulator;' >> "SHADOW MASTER v11.m"
+          echo '@property (nonatomic,strong) ServerSpoofer *serverSpoofer;' >> "SHADOW MASTER v11.m"
+          echo '@property (nonatomic,strong) HardwareSpoofer *hardwareSpoofer;' >> "SHADOW MASTER v11.m"
+          echo '+ (instancetype)sharedInstance;' >> "SHADOW MASTER v11.m"
+          echo '@end' >> "SHADOW MASTER v11.m"
+          echo '' >> "SHADOW MASTER v11.m"
+          echo '@implementation ShadowMasterCore' >> "SHADOW MASTER v11.m"
+          echo '+ (instancetype)sharedInstance {' >> "SHADOW MASTER v11.m"
+          echo 'static ShadowMasterCore *instance=nil;' >> "SHADOW MASTER v11.m"
+          echo 'static dispatch_once_t onceToken;' >> "SHADOW MASTER v11.m"
+          echo 'dispatch_once(&onceToken, ^{ instance=[[ShadowMasterCore alloc] init];});' >> "SHADOW MASTER v11.m"
+          echo 'return instance; }' >> "SHADOW MASTER v11.m"
+          echo '@end' >> "SHADOW MASTER v11.m"
 
-@class NetworkManipulator;
-@class ServerSpoofer;
-@class HardwareSpoofer;
-
-@interface ShadowMasterCore : NSObject
-@property (nonatomic, strong) NetworkManipulator *networkManipulator;
-@property (nonatomic, strong) ServerSpoofer *serverSpoofer;
-@property (nonatomic, strong) HardwareSpoofer *hardwareSpoofer;
-+ (instancetype)sharedInstance;
-@end
-
-@implementation ShadowMasterCore
-+ (instancetype)sharedInstance {
-    static ShadowMasterCore *instance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        instance = [[ShadowMasterCore alloc] init];
-    });
-    return instance;
-}
-@end
-
-@interface MemoryExploiter : NSObject
-- (void)startExploitation;
-@end
-
-@implementation MemoryExploiter
-- (void)startExploitation {}
-@end
-
-@interface BehaviorSpoofer : NSObject
-- (NSDictionary *)generateLegitimateBehavior:(id)player;
-- (BOOL)spoofAimbotPatterns:(id)aimData;
-- (BOOL)spoofSpeedHacks:(id)movement;
-- (BOOL)spoofWallhackUsage:(id)vision;
-- (BOOL)spoofPhysics:(id)physics;
-- (BOOL)fakeMovementConstraints:(id)constraints;
-- (BOOL)spoofShotPatterns:(id)shots;
-@end
-
-@implementation BehaviorSpoofer
-- (NSDictionary *)generateLegitimateBehavior:(id)player { return @{}; }
-- (BOOL)spoofAimbotPatterns:(id)aimData { return YES; }
-- (BOOL)spoofSpeedHacks:(id)movement { return YES; }
-- (BOOL)spoofWallhackUsage:(id)vision { return YES; }
-- (BOOL)spoofPhysics:(id)physics { return YES; }
-- (BOOL)fakeMovementConstraints:(id)constraints { return YES; }
-- (BOOL)spoofShotPatterns:(id)shots { return YES; }
-@end
-
-@interface NetworkManipulator : NSObject @end
-@implementation NetworkManipulator @end
-
-@interface ServerSpoofer : NSObject @end
-@implementation ServerSpoofer @end
-
-@interface HardwareSpoofer : NSObject @end
-@implementation HardwareSpoofer @end
-EOF
-
-          echo "Fixing ShadowUI enums..."
-
+          # Fix enums in ShadowUI
           sed -i '' 's/preferredStyle:1/preferredStyle:UIAlertControllerStyleAlert/g' ShadowUI.m || true
           sed -i '' 's/style:0/style:UIAlertActionStyleDefault/g' ShadowUI.m || true
 
@@ -96,60 +53,29 @@ EOF
 
           clang++ \
             -arch arm64 \
-            -arch arm64e \
             -dynamiclib \
             -x objective-c++ \
             -std=c++17 \
             -isysroot "$SDK_PATH" \
             -miphoneos-version-min=14.0 \
-            -O3 \
-            -flto=thin \
-            -dead_strip \
+            -O2 \
             -fobjc-arc \
             -fmodules \
-            -fvisibility=hidden \
             -Wno-error \
-            -I. \
             "SHADOW MASTER v11.m" \
             ShadowUI.m \
             -framework Foundation \
             -framework UIKit \
             -framework Security \
-            -framework CoreGraphics \
-            -framework CoreImage \
-            -framework QuartzCore \
-            -framework Metal \
-            -framework MetalKit \
             -lc++ \
             -o build/lib${FRAMEWORK_NAME}.dylib
 
           mkdir -p build/${FRAMEWORK_NAME}.framework
           cp build/lib${FRAMEWORK_NAME}.dylib build/${FRAMEWORK_NAME}.framework/${FRAMEWORK_NAME}
 
-          cat > build/${FRAMEWORK_NAME}.framework/Info.plist <<PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
- "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>${FRAMEWORK_NAME}</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.shadow.${FRAMEWORK_NAME}</string>
-    <key>CFBundlePackageType</key>
-    <string>FMWK</string>
-    <key>MinimumOSVersion</key>
-    <string>14.0</string>
-</dict>
-</plist>
-PLIST
-
-          xcodebuild -create-xcframework \
-            -framework build/${FRAMEWORK_NAME}.framework \
-            -output output/${FRAMEWORK_NAME}.xcframework
-
-      - name: 📦 Upload Artifact
+      - name: 📦 Upload
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster_XCFramework_AutoFixed
-          path: output/ShadowMaster.xcframework
+          name: ShadowMaster_Framework
+          path: build/ShadowMaster.framework
+        
