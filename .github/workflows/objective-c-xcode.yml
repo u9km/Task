@@ -1,39 +1,65 @@
 name: Build ShadowMaster
 
-on: [push, workflow_dispatch]
+on:
+  push:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Reconstruct Source Code
+      - name: Create Source File
         run: |
-          cat <<EOF > "SHADOW MASTER v11.m"
+          cat <<EOF > "ShadowMaster.m"
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
           #import <CoreML/CoreML.h>
           #import <objc/runtime.h>
 
-          @interface PlayerData : NSObject @end @implementation PlayerData @end
-          @interface AimData : NSObject @end @implementation AimData @end
-          @interface MovementData : NSObject @end @implementation MovementData @end
-          @interface VisionData : NSObject @end @implementation VisionData @end
-          @interface PhysicsData : NSObject @end @implementation PhysicsData @end
-          @interface MoveConstraints : NSObject @end @implementation MoveConstraints @end
-          @interface ShotData : NSObject @end @implementation ShotData @end
-          @interface CheatPrediction : NSObject @end @implementation CheatPrediction @end
+          @interface PlayerData : NSObject @end
+          @implementation PlayerData @end
 
-          @interface MemoryExploiter : NSObject @end @implementation MemoryExploiter @end
-          @interface BehaviorSpoofer : NSObject @end @implementation BehaviorSpoofer @end
-          @interface NetworkManipulator : NSObject @end @implementation NetworkManipulator @end
-          @interface AIEvader : NSObject @end @implementation AIEvader @end
-          @interface ServerSpoofer : NSObject @end @implementation ServerSpoofer @end
-          @interface HardwareSpoofer : NSObject @end @implementation HardwareSpoofer @end
+          @interface AimData : NSObject @end
+          @implementation AimData @end
+
+          @interface MovementData : NSObject @end
+          @implementation MovementData @end
+
+          @interface VisionData : NSObject @end
+          @implementation VisionData @end
+
+          @interface PhysicsData : NSObject @end
+          @implementation PhysicsData @end
+
+          @interface MoveConstraints : NSObject @end
+          @implementation MoveConstraints @end
+
+          @interface ShotData : NSObject @end
+          @implementation ShotData @end
+
+          @interface CheatPrediction : NSObject @end
+          @implementation CheatPrediction @end
+
+          @interface MemoryExploiter : NSObject @end
+          @implementation MemoryExploiter @end
+
+          @interface BehaviorSpoofer : NSObject @end
+          @implementation BehaviorSpoofer @end
+
+          @interface NetworkManipulator : NSObject @end
+          @implementation NetworkManipulator @end
+
+          @interface AIEvader : NSObject @end
+          @implementation AIEvader @end
+
+          @interface ServerSpoofer : NSObject @end
+          @implementation ServerSpoofer @end
+
+          @interface HardwareSpoofer : NSObject @end
+          @implementation HardwareSpoofer @end
 
           @interface ShadowMasterCore : NSObject
           + (instancetype)master;
@@ -56,30 +82,19 @@ jobs:
           }
           EOF
 
-      - name: Generate Project
-        run: xcodegen generate
-
-      - name: Build Dylib
+      - name: Build Dylib (No Signing Needed)
         run: |
           mkdir -p output
-          # الحل هنا: إضافة Flags لتعطيل الـ TBD والتحقق الأمني
-          xcodebuild -project ShadowMasterProject.xcodeproj \
-          -scheme ShadowMaster \
-          -configuration Release \
-          -sdk iphoneos \
-          CONFIGURATION_BUILD_DIR=$(pwd)/output \
-          clean build \
-          CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGN_IDENTITY="" \
-          AD_HOC_CODE_SIGNING_ALLOWED=YES \
-          EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
-          GENERATE_TEXT_BASED_STUBS=NO
+          clang -dynamiclib ShadowMaster.m \
+            -framework Foundation \
+            -framework UIKit \
+            -framework CoreML \
+            -o output/ShadowMaster.dylib
 
       - name: Verify Output
         run: ls -R output
 
-      - name: Upload Result
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ShadowMaster-Dylib
