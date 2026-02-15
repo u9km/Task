@@ -1,4 +1,4 @@
-name: Build iOS Framework (Auto Fix Elite)
+name: Build iOS Framework (Auto Fix Stable)
 
 on:
   push:
@@ -16,8 +16,7 @@ jobs:
 
       - name: 🔧 Auto Fix Source Files
         run: |
-
-          echo "🛠 Fixing SHADOW MASTER v11.m structure..."
+          echo "Rebuilding SHADOW MASTER v11.m safely..."
 
           cat > "SHADOW MASTER v11.m" <<'EOF'
 #import <Foundation/Foundation.h>
@@ -83,12 +82,8 @@ jobs:
 @implementation HardwareSpoofer @end
 EOF
 
-          echo "🛠 Fixing ShadowUI.m..."
+          echo "Fixing ShadowUI enums..."
 
-          # Fix deprecated keyWindow
-          sed -i '' 's/\[UIApplication sharedApplication\].keyWindow/({UIWindow *w=nil; for (UIWindowScene *s in [UIApplication sharedApplication].connectedScenes){if(s.activationState==UISceneActivationStateForegroundActive){w=s.windows.firstObject;break;}} w;})/g' ShadowUI.m || true
-
-          # Fix enums
           sed -i '' 's/preferredStyle:1/preferredStyle:UIAlertControllerStyleAlert/g' ShadowUI.m || true
           sed -i '' 's/style:0/style:UIAlertActionStyleDefault/g' ShadowUI.m || true
 
@@ -131,23 +126,23 @@ EOF
           mkdir -p build/${FRAMEWORK_NAME}.framework
           cp build/lib${FRAMEWORK_NAME}.dylib build/${FRAMEWORK_NAME}.framework/${FRAMEWORK_NAME}
 
-          cat > build/${FRAMEWORK_NAME}.framework/Info.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-           "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>${FRAMEWORK_NAME}</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.shadow.${FRAMEWORK_NAME}</string>
-              <key>CFBundlePackageType</key>
-              <string>FMWK</string>
-              <key>MinimumOSVersion</key>
-              <string>14.0</string>
-          </dict>
-          </plist>
-          EOF
+          cat > build/${FRAMEWORK_NAME}.framework/Info.plist <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>${FRAMEWORK_NAME}</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.shadow.${FRAMEWORK_NAME}</string>
+    <key>CFBundlePackageType</key>
+    <string>FMWK</string>
+    <key>MinimumOSVersion</key>
+    <string>14.0</string>
+</dict>
+</plist>
+PLIST
 
           xcodebuild -create-xcframework \
             -framework build/${FRAMEWORK_NAME}.framework \
