@@ -1,4 +1,4 @@
-name: Build ShadowMaster with UI
+name: Build ShadowMaster Combined
 
 on: [push, workflow_dispatch]
 
@@ -11,7 +11,7 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Prepare ShadowUI.m
+      - name: Create Independent ShadowUI.m
         run: |
           cat <<EOF > "ShadowUI.m"
           #import <Foundation/Foundation.h>
@@ -41,7 +41,7 @@ jobs:
                   [a addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
                   
                   UIViewController *root = window.rootViewController;
-                  while (root.presentedViewController) root = root.presentedViewController;
+                  while (root && root.presentedViewController) root = root.presentedViewController;
                   [root presentViewController:a animated:YES completion:nil];
               });
           }
@@ -49,24 +49,31 @@ jobs:
 
           __attribute__((constructor))
           static void shadow_ui_init() {
-              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  [ShadowUI alert:@"ShadowMaster v11" msg:@"✅ UI Loaded Successfully\n🛡️ Protection Linked"];
+              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 12 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                  [ShadowUI alert:@"ShadowMaster v11" msg:@"✅ UI & Protection Loaded Successfully"];
               });
           }
           EOF
 
-      - name: Patch Shadow Master Source
+      - name: Clean Original File From Duplicates
         run: |
-          # إضافة تعريفات الكلاسات المفقودة فقط في بداية الملف دون تكرار الـ Implementation
+          # هذا السطر سيقوم بحذف أي سطر يحتوي على @implementation أو @interface أضفناه سابقاً بالخطأ
+          # لترك الملف الأصلي نظيفاً للمترجم
+          sed -i '' '/@implementation MemoryExploiter/d' "SHADOW MASTER v11.m"
+          sed -i '' '/@implementation BehaviorSpoofer/d' "SHADOW MASTER v11.m"
+          sed -i '' '/@implementation ShadowMasterCore/d' "SHADOW MASTER v11.m"
+          
+          # إضافة الاستيرادات الضرورية فقط في أول سطر
           sed -i '' '1i\
-          @class PlayerData, AimData, MovementData, VisionData, PhysicsData, MoveConstraints, ShotData, CheatPrediction;\
+          #import <Foundation/Foundation.h>\
+          #import <UIKit/UIKit.h>\
           #import <CoreML/CoreML.h>\
           ' "SHADOW MASTER v11.m"
 
       - name: Generate Project
         run: xcodegen generate
 
-      - name: Build Dylib
+      - name: Build Final Dylib
         run: |
           mkdir -p output
           xcodebuild -project ShadowMasterProject.xcodeproj \
@@ -78,8 +85,7 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO \
           EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
-          GENERATE_TEXT_BASED_STUBS=NO \
-          OTHER_CFLAGS="-Wno-everything -Wno-objc-interface-ivars"
+          OTHER_CFLAGS="-Wno-everything -D'interface=class'"
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
