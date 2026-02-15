@@ -1,4 +1,4 @@
-name: Build Real iOS Framework
+name: Build iOS Framework
 
 on:
   push:
@@ -7,43 +7,38 @@ on:
 jobs:
   build:
     runs-on: macos-14
-
     env:
       FRAMEWORK_NAME: ShadowMaster
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: 📁 Prepare Structure
+      - name: Prepare Folders
         run: |
-          mkdir -p build
-          mkdir -p build/${FRAMEWORK_NAME}.framework
           mkdir -p build/${FRAMEWORK_NAME}.framework/Headers
           mkdir -p build/${FRAMEWORK_NAME}.framework/Modules
           mkdir -p output
 
-      - name: 🧾 Generate Public Header
+      - name: Create Public Header
         run: |
           echo '#import <Foundation/Foundation.h>' > build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
           echo '@interface ShadowMasterCore : NSObject' >> build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
           echo '+ (instancetype)sharedInstance;' >> build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
           echo '@end' >> build/${FRAMEWORK_NAME}.framework/Headers/${FRAMEWORK_NAME}.h
 
-      - name: 🧩 Generate module.modulemap
+      - name: Create module.modulemap
         run: |
           echo "framework module ${FRAMEWORK_NAME} {" > build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
           echo "  umbrella header \"${FRAMEWORK_NAME}.h\"" >> build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
           echo "  export *" >> build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
-          echo "  module * { export * }" >> build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
           echo "}" >> build/${FRAMEWORK_NAME}.framework/Modules/module.modulemap
 
-      - name: 🚀 Build Binary
+      - name: Build Binary
         run: |
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 
           clang++ \
             -arch arm64 \
-            -arch arm64e \
             -dynamiclib \
             -install_name @rpath/${FRAMEWORK_NAME}.framework/${FRAMEWORK_NAME} \
             -x objective-c++ \
@@ -61,34 +56,26 @@ jobs:
             -lc++ \
             -o build/${FRAMEWORK_NAME}.framework/${FRAMEWORK_NAME}
 
-      - name: 🧾 Generate Info.plist
+      - name: Generate Info.plist
         run: |
-          cat > build/${FRAMEWORK_NAME}.framework/Info.plist <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleExecutable</key>
-  <string>${FRAMEWORK_NAME}</string>
-  <key>CFBundleIdentifier</key>
-  <string>com.shadow.${FRAMEWORK_NAME}</string>
-  <key>CFBundlePackageType</key>
-  <string>FMWK</string>
-  <key>MinimumOSVersion</key>
-  <string>14.0</string>
-</dict>
-</plist>
-EOF
+          echo '<?xml version="1.0" encoding="UTF-8"?>' > build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo '<plist version="1.0">' >> build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo '<dict>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo '<key>CFBundleExecutable</key>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo "<string>${FRAMEWORK_NAME}</string>" >> build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo '<key>CFBundlePackageType</key>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo '<string>FMWK</string>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo '</dict>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
+          echo '</plist>' >> build/${FRAMEWORK_NAME}.framework/Info.plist
 
-      - name: 📦 Create XCFramework
+      - name: Create XCFramework
         run: |
           xcodebuild -create-xcframework \
             -framework build/${FRAMEWORK_NAME}.framework \
             -output output/${FRAMEWORK_NAME}.xcframework
 
-      - name: 📤 Upload
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster_Real_Framework
+          name: ShadowMaster_Framework
           path: output/${FRAMEWORK_NAME}.xcframework
