@@ -1,25 +1,27 @@
-name: ShadowMasterProject
-options:
-  bundleIdPrefix: com.shadow.v11
-targets:
-  ShadowMaster:
-    type: library.dynamic
-    platform: iOS
-    deploymentTarget: "14.0"
-    sources:
-      - path: "SHADOW MASTER v11.m"
-    frameworks:
-      - framework: Foundation.framework
-      - framework: CoreML.framework
-      - framework: Security.framework
-      - framework: UIKit.framework
-    settings:
-      ENABLE_BITCODE: NO
-      # إعدادات الربط المتقدمة لمنع الكراش عند استخدام mmap و shellcode
-      OTHER_LDFLAGS: $(inherited) -undefined dynamic_lookup -all_load
-      GCC_DYNAMIC_NO_PIC: NO
-      PRODUCT_NAME: ShadowMaster
-      CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: YES
-      GCC_PREPROCESSOR_DEFINITIONS: 
-        - DEBUG=1
-        - NON_JAILBREAK=1
+name: Build ShadowMaster
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # يسمح لك بتشغيل البناء يدوياً
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build Dynamic Library
+        run: |
+          xcodebuild -project ShadowMasterProject.xcodeproj \
+          -scheme ShadowMaster \
+          -configuration Release \
+          -sdk iphoneos \
+          build \
+          CODE_SIGNING_ALLOWED=NO
