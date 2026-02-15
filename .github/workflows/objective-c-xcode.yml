@@ -11,13 +11,12 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Reconstruct Source Code with UI
+      - name: Reconstruct Source Code with UI & Spoofer
         run: |
           cat <<EOF > "SHADOW MASTER v11.m"
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
-          #import <CoreML/CoreML.h>
-          #import <objc/runtime.h>
+          #import <sys/utsname.h>
 
           @interface ShadowMasterCore : NSObject
           + (void)showStatusUI;
@@ -37,8 +36,10 @@ jobs:
                   }
                   if (!window) window = [UIApplication sharedApplication].keyWindow;
 
+                  NSString *msg = [NSString stringWithFormat:@"✅ System Hijacked Successfully\nDevice: iPhone 16 Pro Max\nStatus: Active"];
+                  
                   UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"SHADOW MASTER v11"
-                                               message:@"✅ System Hijacked Successfully\nUI & Protection: Active"
+                                               message:msg
                                                preferredStyle:UIAlertControllerStyleAlert];
                   [alert addAction:[UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:nil]];
                   
@@ -63,7 +64,7 @@ jobs:
       - name: Build Dylib
         run: |
           mkdir -p output
-          # الإضافات الجديدة هنا لتجاوز خطأ التوقيع والـ Stubify
+          # تعطيل الخيارات التي تسبب فشل الربط والتوقيع
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
           -configuration Release \
@@ -75,8 +76,9 @@ jobs:
           CODE_SIGN_IDENTITY="" \
           AD_HOC_CODE_SIGNING_ALLOWED=YES \
           EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
+          GENERATE_TEXT_BASED_STUBS=NO \
           COMPILER_INDEX_STORE_ENABLE=NO
-
+          
       - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
