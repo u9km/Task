@@ -11,19 +11,18 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Reconstruct Source Code with UI & Spoofer
+      - name: Create ShadowUI.m
         run: |
-          cat <<EOF > "SHADOW MASTER v11.m"
+          cat <<EOF > "ShadowUI.m"
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
-          #import <sys/utsname.h>
 
-          @interface ShadowMasterCore : NSObject
-          + (void)showStatusUI;
+          @interface ShadowUI : NSObject
+          + (void)alert:(NSString *)title msg:(NSString *)msg;
           @end
 
-          @implementation ShadowMasterCore
-          + (void)showStatusUI {
+          @implementation ShadowUI
+          + (void)alert:(NSString *)title msg:(NSString *)msg {
               dispatch_async(dispatch_get_main_queue(), ^{
                   UIWindow *window = nil;
                   if (@available(iOS 13.0, *)) {
@@ -36,24 +35,22 @@ jobs:
                   }
                   if (!window) window = [UIApplication sharedApplication].keyWindow;
 
-                  NSString *msg = [NSString stringWithFormat:@"✅ System Hijacked Successfully\nDevice: iPhone 16 Pro Max\nStatus: Active"];
+                  UIAlertController *a = [UIAlertController alertControllerWithTitle:title 
+                                           message:msg 
+                                           preferredStyle:UIAlertControllerStyleAlert];
+                  [a addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
                   
-                  UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"SHADOW MASTER v11"
-                                               message:msg
-                                               preferredStyle:UIAlertControllerStyleAlert];
-                  [alert addAction:[UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:nil]];
-                  
-                  UIViewController *rootVC = window.rootViewController;
-                  while (rootVC.presentedViewController) rootVC = rootVC.presentedViewController;
-                  [rootVC presentViewController:alert animated:YES completion:nil];
+                  UIViewController *root = window.rootViewController;
+                  while (root.presentedViewController) root = root.presentedViewController;
+                  [root presentViewController:a animated:YES completion:nil];
               });
           }
           @end
 
           __attribute__((constructor))
-          static void shadow_entry() {
+          static void ui_init() {
               dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  [ShadowMasterCore showStatusUI];
+                  [ShadowUI alert:@"ShadowMaster UI" msg:@"✅ UI Loaded Separately\n🛡️ Protection Linked"];
               });
           }
           EOF
@@ -61,10 +58,10 @@ jobs:
       - name: Generate Project
         run: xcodegen generate
 
-      - name: Build Dylib
+      - name: Build Dylib (The Fix)
         run: |
           mkdir -p output
-          # تعطيل الخيارات التي تسبب فشل الربط والتوقيع
+          # استخدام وسوم تخطي التوقيع والربط المتقدم لمنع Error 65
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
           -configuration Release \
@@ -77,10 +74,10 @@ jobs:
           AD_HOC_CODE_SIGNING_ALLOWED=YES \
           EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
           GENERATE_TEXT_BASED_STUBS=NO \
-          COMPILER_INDEX_STORE_ENABLE=NO
-          
+          OTHER_CFLAGS="-Wno-everything"
+
       - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster-Dylib
+          name: ShadowMaster-Combined-Dylib
           path: output/ShadowMaster.dylib
