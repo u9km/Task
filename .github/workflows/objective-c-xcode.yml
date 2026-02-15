@@ -1,4 +1,4 @@
-name: Build ShadowMaster (Final Structural Fix)
+name: Build ShadowMaster (Final Master Fix)
 
 on:
   push:
@@ -11,32 +11,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🚑 Surgical Source Repair
+      - name: 🛠️ Comprehensive Source Refactoring
         run: |
-          echo "🔧 Repairing ShadowUI.m (Alert Styles)..."
-          # إصلاح أنواع الـ Enum في UIAlertController
+          echo "🧹 Cleaning ShadowUI.m..."
           sed -i '' 's/preferredStyle:1/preferredStyle:UIAlertControllerStyleAlert/g' ShadowUI.m || true
           sed -i '' 's/style:0/style:UIAlertActionStyleDefault/g' ShadowUI.m || true
           sed -i '' 's/\[UIApplication sharedApplication\]\.keyWindow/\[\[\[UIApplication sharedApplication\] windows\] firstObject\]/g' ShadowUI.m || true
 
-          echo "🧬 Repairing SHADOW MASTER v11.m logic errors..."
-          # 1. إصلاح نوع الإرجاع لدالة تحليل الثغرات (كانت void وهي ترجع NSDictionary)
-          sed -i '' 's/- (void)analyzeVulnerabilities/- (id)analyzeVulnerabilities/g' "SHADOW MASTER v11.m" || true
+          echo "✂️ Surgical removal of duplicate definitions in SHADOW MASTER v11.m..."
+          # حذف السطور المكررة التي تسبب التضارب (الواجهات الفارغة في بداية الملف)
+          # سنحذف أي @implementation تظهر قبل @interface في بداية الملف
+          sed -i '' '1,30d' "SHADOW MASTER v11.m" || true
           
-          # 2. إصلاح استدعاء الدوال (تغيير الصيغة الخاطئة self.method: إلى [self method:])
-          sed -i '' 's/\[self\.corruptAntiCheatMemory:vuln\];/[self corruptAntiCheatMemory:vuln];/g' "SHADOW MASTER v11.m" || true
-          sed -i '' 's/\[self\.floodAntiCheatNetwork:vuln\];/[self floodAntiCheatNetwork:vuln];/g' "SHADOW MASTER v11.m" || true
-          sed -i '' 's/\[self\.plantLogicBomb:vuln\];/[self plantLogicBomb:vuln];/g' "SHADOW MASTER v11.m" || true
-          sed -i '' 's/\[self\.exploitRaceCondition:vuln\];/[self exploitRaceCondition:vuln];/g' "SHADOW MASTER v11.m" || true
-          sed -i '' 's/\[self\.exhaustAntiCheatResources:vuln\];/[self exhaustAntiCheatResources:vuln];/g' "SHADOW MASTER v11.m" || true
-
-          echo "🛡️ Creating Comprehensive Global Header..."
-          # إنشاء ترويسة شاملة لتعريف كافة الكلاسات والهياكل المفقودة
-          cat << 'EOF' > ShadowGlobalFix.h
+          echo "🧬 Creating a Clean Global Header..."
+          cat << 'EOF' > ShadowClean.h
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
           #import <CoreML/CoreML.h>
 
+          // تعريف الهياكل الأساسية
           typedef struct { float x, y, z; } PlayerData;
           typedef struct { float x, y; } AimData;
           typedef struct { float x, y, z; } MovementData;
@@ -45,52 +38,41 @@ jobs:
           typedef struct { float max_speed; } MoveConstraints;
           typedef struct { int count; } ShotData;
 
-          @class MLModel, VideoFrame, CheatPrediction, ClientState, ValidationResult, PlayerAction, CheatDetection, SecurityAlert;
-          @class VulnerabilityAssessment, AttackPlan, VulnerabilityAnalysis;
+          // تصريح مسبق لجميع الكلاسات
+          @class MemoryExploiter, BehaviorSpoofer, NetworkManipulator, AIEvader, ServerSpoofer, HardwareSpoofer;
+          @class DeceptionSystem, ActiveAttackSystem, ReverseDefenseSystem, HackingTools, AttackerDashboard, VulnerabilityAssessment;
           
-          @interface VulnerabilityAssessment : NSObject
-          @property (nonatomic) float successRate;
-          @property (nonatomic) NSInteger attackType;
+          // تعريف واجهة ShadowMasterCore بشكل كامل وصحيح في البداية
+          @interface ShadowMasterCore : NSObject
+          @property (strong, nonatomic) MemoryExploiter *memoryExploiter;
+          @property (strong, nonatomic) BehaviorSpoofer *behaviorSpoofer;
+          @property (strong, nonatomic) NetworkManipulator *networkManipulator;
+          @property (strong, nonatomic) AIEvader *aiEvader;
+          @property (strong, nonatomic) ServerSpoofer *serverSpoofer;
+          @property (strong, nonatomic) HardwareSpoofer *hardwareSpoofer;
+          + (instancetype)master;
+          - (void)initializeWithOverride:(NSDictionary *)config;
+          - (void)startExploitation;
+          - (void)monitorAntiCheat;
           @end
 
-          @interface AttackerDashboard : UIViewController
+          @interface AttackerDashboard : NSObject
           + (instancetype)shared;
           - (void)updateWithVulnerability:(id)vuln;
           + (void)launch;
           @end
-
-          // تعريف الواجهات المفقودة لضمان نجاح التخصيص (alloc init)
-          @interface MemoryExploiter : NSObject @end
-          @interface BehaviorSpoofer : NSObject - (void)startBehaviorSpoofing; @end
-          @interface NetworkManipulator : NSObject @end
-          @interface AIEvader : NSObject - (void)startEvasion; @end
-          @interface ServerSpoofer : NSObject @end
-          @interface HardwareSpoofer : NSObject @end
-          @interface VulnerabilityAnalysis : NSObject @end
-          @interface DeceptionSystem : NSObject @end
-          @interface ActiveAttackSystem : NSObject @end
-          @interface ReverseDefenseSystem : NSObject @end
-          @interface HackingTools : NSObject @end
           EOF
 
-          # حقن الترويسة في بداية الملف الرئيسي وحذف التعريفات المكررة الفارغة
+          # حقن الترويسة النظيفة في بداية الملف
           sed -i '' '1i\
-          #import "ShadowGlobalFix.h"\
+          #import "ShadowClean.h"\
           ' "SHADOW MASTER v11.m" || true
-          sed -i '' '/@interface.*NSObject @end/d' "SHADOW MASTER v11.m" || true
 
-          echo "🏗️ Adding Missing Implementations Stub..."
-          # إضافة تنفيذات (Implementation) فارغة للكلاسات لكي لا يفشل المترجم عند الربط
-          cat << 'EOF' >> "SHADOW MASTER v11.m"
-          @implementation MemoryExploiter - (BOOL)injectCodeIntoProcess {return YES;} - (void)setupMemoryCloaking {} @end
-          @implementation BehaviorSpoofer - (void)startBehaviorSpoofing {} @end
-          @implementation NetworkManipulator - (void)interceptNetworkTraffic {} - (void)establishMitMChannel {} @end
-          @implementation AIEvader - (void)startEvasion {} @end
-          @implementation ServerSpoofer @end
-          @implementation HardwareSpoofer - (BOOL)spoofHardwareConsistency {return YES;} @end
-          @implementation VulnerabilityAnalysis - (void)findSecurityGaps:(id)d {} - (void)applyExploitAlgorithms {} - (float)calculateSuccessRate {return 0.9;} - (id)determineOptimalAttack {return 0;} - (id)generateDetailedAttackPlan {return nil;} - (float)calculateStealthLevel {return 1.0;} @end
-          @implementation AttackerDashboard + (instancetype)shared {static id s; if(!s)s=[[self alloc] init]; return s;} - (void)updateWithVulnerability:(id)v {} + (void)launch {} @end
-          EOF
+          # تصحيح استدعاءات الدوال التي استخدمت صيغة خاطئة
+          sed -i '' 's/self\.corruptAntiCheatMemory:vuln/[self corruptAntiCheatMemory:vuln]/g' "SHADOW MASTER v11.m" || true
+          sed -i '' 's/self\.floodAntiCheatNetwork:vuln/[self floodAntiCheatNetwork:vuln]/g' "SHADOW MASTER v11.m" || true
+          sed -i '' 's/self\.plantLogicBomb:vuln/[self plantLogicBomb:vuln]/g' "SHADOW MASTER v11.m" || true
+          sed -i '' 's/self\.exploitRaceCondition:vuln/[self exploitRaceCondition:vuln]/g' "SHADOW MASTER v11.m" || true
 
       - name: 🚀 Build Combined Dylib
         run: |
@@ -132,5 +114,5 @@ jobs:
       - name: 📦 Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster_Ultimate
+          name: ShadowMaster_Final_Build
           path: output/ShadowMaster.dylib
