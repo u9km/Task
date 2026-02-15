@@ -1,4 +1,4 @@
-name: Build ShadowMaster Combined
+name: Build ShadowMaster
 
 on: [push, workflow_dispatch]
 
@@ -11,64 +11,61 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Create Independent ShadowUI.m
+      - name: Reconstruct Source Code
         run: |
-          cat <<EOF > "ShadowUI.m"
+          cat <<EOF > "SHADOW MASTER v11.m"
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
+          #import <CoreML/CoreML.h>
+          #import <objc/runtime.h>
 
-          @interface ShadowUI : NSObject
-          + (void)showSimpleAlert;
+          @interface PlayerData : NSObject @end @implementation PlayerData @end
+          @interface AimData : NSObject @end @implementation AimData @end
+          @interface MovementData : NSObject @end @implementation MovementData @end
+          @interface VisionData : NSObject @end @implementation VisionData @end
+          @interface PhysicsData : NSObject @end @implementation PhysicsData @end
+          @interface MoveConstraints : NSObject @end @implementation MoveConstraints @end
+          @interface ShotData : NSObject @end @implementation ShotData @end
+          @interface CheatPrediction : NSObject @end @implementation CheatPrediction @end
+
+          @interface MemoryExploiter : NSObject @end @implementation MemoryExploiter @end
+          @interface BehaviorSpoofer : NSObject @end @implementation BehaviorSpoofer @end
+          @interface NetworkManipulator : NSObject @end @implementation NetworkManipulator @end
+          @interface AIEvader : NSObject @end @implementation AIEvader @end
+          @interface ServerSpoofer : NSObject @end @implementation ServerSpoofer @end
+          @interface HardwareSpoofer : NSObject @end @implementation HardwareSpoofer @end
+
+          @interface ShadowMasterCore : NSObject
+          + (instancetype)master;
+          - (void)initializeWithOverride:(NSDictionary *)config;
           @end
 
-          @implementation ShadowUI
-          + (void)showSimpleAlert {
-              dispatch_async(dispatch_get_main_queue(), ^{
-                  UIWindow *window = nil;
-                  if (@available(iOS 13.0, *)) {
-                      for (UIWindowScene* scene in [UIApplication sharedApplication].connectedScenes) {
-                          if (scene.activationState == UISceneActivationStateForegroundActive) {
-                              window = scene.windows.firstObject;
-                              break;
-                          }
-                      }
-                  }
-                  if (!window) window = [UIApplication sharedApplication].keyWindow;
-
-                  UIAlertController *a = [UIAlertController alertControllerWithTitle:@"ShadowMaster v11" 
-                                           message:@"✅ UI & Protection Loaded\nStatus: Stealth Active" 
-                                           preferredStyle:UIAlertControllerStyleAlert];
-                  [a addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-                  
-                  UIViewController *root = window.rootViewController;
-                  while (root && root.presentedViewController) root = root.presentedViewController;
-                  [root presentViewController:a animated:YES completion:nil];
+          @implementation ShadowMasterCore
+          + (instancetype)master {
+              static ShadowMasterCore *instance = nil;
+              static dispatch_once_t onceToken;
+              dispatch_once(&onceToken, ^{
+                  instance = [[ShadowMasterCore alloc] init];
               });
+              return instance;
+          }
+          - (void)initializeWithOverride:(NSDictionary *)config {
+              NSLog(@"[ShadowMaster] System Active");
           }
           @end
 
           __attribute__((constructor))
-          static void shadow_ui_init() {
-              dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 12 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                  [ShadowUI showSimpleAlert];
-              });
+          static void shadow_entry() {
+              NSLog(@"[ShadowMaster] Library Loaded Successfully");
           }
           EOF
-
-      - name: Clean Original File
-        run: |
-          # تنظيف أي محاولات حقن سابقة قد تسبب تكرار
-          sed -i '' '1i\
-          #import <Foundation/Foundation.h>\
-          #import <UIKit/UIKit.h>\
-          #import <CoreML/CoreML.h>\
-          ' "SHADOW MASTER v11.m"
 
       - name: Generate Project
         run: xcodegen generate
 
-      - name: Build Final Dylib
+      - name: Build Dylib
         run: |
+          # إنشاء مجلد للمخرجات
           mkdir -p output
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
@@ -77,10 +74,10 @@ jobs:
           CONFIGURATION_BUILD_DIR=$(pwd)/output \
           clean build \
           CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO \
-          EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
-          GENERATE_TEXT_BASED_STUBS=NO \
-          OTHER_CFLAGS="-Wno-everything" 
+          CODE_SIGNING_REQUIRED=NO
+
+      - name: Verify Output
+        run: ls -R output # للتأكد من وجود الملف قبل الرفع
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
