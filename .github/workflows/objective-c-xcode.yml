@@ -1,9 +1,6 @@
-name: Build ShadowMaster
+name: Build ShadowMaster Dylib
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch: # يسمح لك بتشغيل البناء يدوياً
+on: [push, workflow_dispatch]
 
 jobs:
   build:
@@ -14,14 +11,21 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Generate Xcode Project
+      - name: Generate Project
         run: xcodegen generate
 
-      - name: Build Dynamic Library
+      - name: Build
         run: |
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
           -configuration Release \
           -sdk iphoneos \
           build \
-          CODE_SIGNING_ALLOWED=NO
+          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGNING_REQUIRED=NO
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShadowMaster-Dylib
+          path: build/Release-iphoneos/ShadowMaster.dylib
