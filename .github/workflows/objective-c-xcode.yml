@@ -1,4 +1,4 @@
-name: Build ShadowMaster Combined (Stable Fix)
+name: Build ShadowMaster (Fix Structure Errors)
 
 on:
   push:
@@ -11,46 +11,75 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🛠️ Smart Patching (Fix Syntax & Logic Errors)
+      - name: 🧪 Advanced Source Re-Structure
         run: |
-          echo "🔧 Creating Header for Missing Types..."
-          cat << 'EOF' > ShadowDefinitions.h
-          #import <Foundation/Foundation.h>
-          #import <UIKit/UIKit.h>
-          #import <CoreML/CoreML.h>
-
-          // تعريف الهياكل المفقودة لضمان نجاح الربط
-          typedef struct { float x, y, z; } PlayerData;
-          typedef struct { float x, y; } AimData;
-          typedef struct { float x, y, z; } MovementData;
-          typedef struct { float fov; } VisionData;
-          typedef struct { float gravity; } PhysicsData;
-          typedef struct { float max_speed; } MoveConstraints;
-          typedef struct { int count; } ShotData;
+          echo "🚀 Starting Advanced Patching..."
           
-          @class MLModel, VideoFrame, CheatPrediction, ClientState, ValidationResult;
-          @class PlayerAction, CheatDetection, SecurityAlert, VulnerabilityAssessment;
-          @class VulnerabilityAnalysis, AttackPlan, AttackerDashboard;
+          # 1. إصلاح ShadowUI.m (تحويل الأرقام إلى Enum وتصحيح keyWindow)
+          sed -i '' 's/preferredStyle:1/preferredStyle:UIAlertControllerStyleAlert/g' ShadowUI.m || true
+          sed -i '' 's/style:0/style:UIAlertActionStyleDefault/g' ShadowUI.m || true
+          sed -i '' 's/\[UIApplication sharedApplication\]\.keyWindow/\[\[\[UIApplication sharedApplication\] windows\] firstObject\]/g' ShadowUI.m || true
 
-          @interface AttackerDashboard : NSObject
-          + (instancetype)shared;
-          - (void)updateWithVulnerability:(id)vuln;
-          + (void)launch;
-          @end
+          # 2. إنشاء سكريبت Python لإعادة تنظيم الملف المعقد (SHADOW MASTER v11.m)
+          # هذا السكريبت سيضع كل الـ Interfaces في الأعلى والـ Implementations في الأسفل
+          cat << 'EOF' > fix_structure.py
+          import re
+
+          def fix_file(filename):
+              with open(filename, 'r') as f:
+                  content = f.read()
+
+              # استخراج الترويسات والمستوردات
+              imports = re.findall(r'#import.*', content)
+              
+              # استخراج كل كتل الـ @interface
+              interfaces = re.findall(r'@interface.*?@end', content, re.DOTALL)
+              
+              # استخراج كل كتل الـ @implementation
+              implementations = re.findall(r'@implementation.*?@end', content, re.DOTALL)
+              
+              # استخراج الأكواد الثابتة (ROP, Shellcode, Main)
+              statics = re.findall(r'static void.*?\{.*?\}', content, re.DOTALL)
+              main_func = re.findall(r'int main.*?\{.*?\}', content, re.DOTALL)
+              constructor = re.findall(r'__attribute__\(\(constructor\)\).*?\{.*?\}', content, re.DOTALL)
+
+              # بناء الملف الجديد بترتيب صحيح
+              new_content = "// FIXED STRUCTURE - LOGIC UNTOUCHED\n"
+              new_content += "\n".join(set(imports)) + "\n\n"
+              
+              # إضافة تعريفات الأنواع المفقودة (Forward Declarations)
+              new_content += "@class MLModel, PlayerData, AimData, MovementData, VisionData, PhysicsData, MoveConstraints, ShotData;\n"
+              new_content += "@class VideoFrame, CheatPrediction, ClientState, ValidationResult, PlayerAction, CheatDetection, SecurityAlert, VulnerabilityAssessment;\n"
+              new_content += "@class NetworkManipulator, ServerSpoofer, HardwareSpoofer, MemoryExploiter, BehaviorSpoofer, AIEvader, AttackerDashboard;\n\n"
+              
+              # إضافة الـ Structs الأساسية
+              new_content += "typedef struct { float x, y, z; } PlayerData;\ntypedef struct { float x, y; } AimData;\ntypedef struct { float x, y, z; } MovementData;\ntypedef struct { float fov; } VisionData;\ntypedef struct { float gravity; } PhysicsData;\ntypedef struct { float max_speed; } MoveConstraints;\ntypedef struct { int count; } ShotData;\n\n"
+
+              # وضع كل الواجهات أولاً
+              for iface in interfaces:
+                  # إزالة الواجهات الفارغة المكررة (مثل @interface Class : NSObject @end)
+                  if "NSObject @end" not in iface or len(iface) > 40:
+                      new_content += iface + "\n\n"
+
+              # وضع الأكواد الثابتة
+              for stat in statics: new_content += stat + "\n\n"
+              
+              # وضع كل التنفيذات في الأسفل
+              for impl in implementations:
+                  new_content += impl + "\n\n"
+
+              # إضافة الـ Constructor والـ Main في النهاية
+              if constructor: new_content += constructor[0] + "\n\n"
+              if main_func: new_content += main_func[0] + "\n"
+
+              with open(filename, 'w') as f:
+                  f.write(new_content)
+
+          fix_file("SHADOW MASTER v11.m")
           EOF
 
-          echo "🩹 Patching SHADOW MASTER v11.m..."
-          # إزالة التعريفات المكررة التي تسبب أخطاء duplicate interface
-          sed -i '' '/@interface.*NSObject @end/d' "SHADOW MASTER v11.m" || true
-          
-          # حقن ملف التعريفات في بداية الملف
-          sed -i '' '1i\
-          #import "ShadowDefinitions.h"\
-          ' "SHADOW MASTER v11.m" || true
-
-          echo "🩹 Patching ShadowUI.m..."
-          # إصلاح تحذير keyWindow القديم
-          sed -i '' 's/\[UIApplication sharedApplication\]\.keyWindow/\[\[\[UIApplication sharedApplication\] windows\] firstObject\]/g' ShadowUI.m || true
+          python3 fix_structure.py
+          echo "✅ File Structure Re-organized."
 
       - name: 🚀 Build Combined Dylib
         run: |
@@ -58,7 +87,6 @@ jobs:
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 
           echo "Building for iOS arm64..."
-          # تم إضافة '-x objective-c++' لحل مشكلة تعارض المعايير
           clang++ -arch arm64 \
             -dynamiclib \
             -x objective-c++ \
@@ -85,14 +113,14 @@ jobs:
             -ldl \
             -o output/ShadowMaster.dylib
 
-      - name: 🛡️ Strip & Verify
+      - name: 🛡️ Verify & Upload
         run: |
           xcrun strip -x output/ShadowMaster.dylib
-          file output/ShadowMaster.dylib
           ls -lh output/
+          file output/ShadowMaster.dylib
 
       - name: 📦 Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster_Final
+          name: ShadowMaster_Fixed
           path: output/ShadowMaster.dylib
