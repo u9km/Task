@@ -1,4 +1,4 @@
-name: Build ShadowMaster (Pro Fix)
+name: Build ShadowMaster (Pro Fix Final)
 
 on:
   push:
@@ -11,42 +11,73 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🛠️ Pro Source Refactoring
+      - name: 🛠️ Extreme Source Refactoring
         run: |
           echo "🧹 Cleaning ShadowUI.m..."
-          # إصلاح أنواع الـ Enum لـ iOS 17
           sed -i '' 's/preferredStyle:1/preferredStyle:UIAlertControllerStyleAlert/g' ShadowUI.m || true
           sed -i '' 's/style:0/style:UIAlertActionStyleDefault/g' ShadowUI.m || true
           
-          echo "🧬 Restructuring SHADOW MASTER v11.m..."
-          # 1. إغلاق أي Implementation مفتوح بشكل غير صحيح
-          # 2. إضافة @end بعد كل Implementation
-          
-          # استخدام Python لتصحيح الهيكلية (أكثر دقة من sed)
-          python3 -c "
-          with open('SHADOW MASTER v11.m', 'r') as f:
-              content = f.read()
-          
-          # استبدال البدايات المكررة وإغلاقها
-          content = content.replace('@implementation MemoryExploiter', '@end\n@implementation MemoryExploiter')
-          content = content.replace('@implementation BehaviorSpoofer', '@end\n@implementation BehaviorSpoofer')
-          content = content.replace('@implementation NetworkManipulator', '@end\n@implementation NetworkManipulator')
-          
-          # تأكيد وجود @end في نهاية الملف
-          if not content.strip().endswith('@end'):
-              content = content.strip() + '\n@end\n'
-              
-          with open('SHADOW MASTER v11.m', 'w') as f:
-              f.write(content)
-          "
+          echo "🧬 Creating The Master Header (ShadowGlobal.h)..."
+          # هذا الهيدر يحل كافة مشاكل Unknown types و Duplicate definitions
+          cat << 'EOF' > ShadowGlobal.h
+          #import <Foundation/Foundation.h>
+          #import <UIKit/UIKit.h>
+          #import <CoreML/CoreML.h>
+          #import <mach-o/dyld.h>
+          #import <sys/mman.h>
+          #import <objc/runtime.h>
 
-          echo "📋 Updating Header Definitions..."
-          # إضافة الـ Selectors المفقودة في الهيدر لضمان توافق الاستدعاءات
-          sed -i '' '/- (void)startExploitation;/a\
-          - (void)monitorInRealTime;\
-          - (void)cloakCompletely;' "SHADOW MASTER v11.m" || true
+          // تعريف الهياكل الأساسية (Structs)
+          typedef struct { float x, y, z; } PlayerData;
+          typedef struct { float x, y; } AimData;
+          typedef struct { float x, y, z; } MovementData;
+          typedef struct { float fov; } VisionData;
+          typedef struct { float gravity; } PhysicsData;
+          typedef struct { float max_speed; } MoveConstraints;
+          typedef struct { int count; } ShotData;
 
-          # تصحيح خطأ class_getInstanceMethod بتبديل الكلمة المحجوزة class
+          // تعريف الكلاسات (Interfaces)
+          @interface MemoryExploiter : NSObject
+          - (BOOL)injectCodeIntoProcess;
+          @end
+
+          @interface BehaviorSpoofer : NSObject
+          - (NSDictionary *)generateLegitimateBehavior:(PlayerData *)player;
+          @end
+
+          @interface NetworkManipulator : NSObject @end
+          @interface ServerSpoofer : NSObject @end
+          @interface HardwareSpoofer : NSObject @end
+
+          @interface ShadowMasterCore : NSObject
+          @property (strong, nonatomic) MemoryExploiter *memoryExploiter;
+          @property (strong, nonatomic) BehaviorSpoofer *behaviorSpoofer;
+          @property (strong, nonatomic) NetworkManipulator *networkManipulator;
+          @property (strong, nonatomic) ServerSpoofer *serverSpoofer;
+          @property (strong, nonatomic) HardwareSpoofer *hardwareSpoofer;
+          + (instancetype)master;
+          - (void)initializeWithOverride:(NSDictionary *)config;
+          - (void)startExploitation;
+          - (void)monitorInRealTime;
+          - (void)cloakCompletely;
+          @end
+          EOF
+
+          echo "✂️ Surgical removal of conflicted interfaces from SHADOW MASTER v11.m..."
+          # حذف أي سطر يبدأ بـ @interface أو @end أو @implementation من ملف الـ m
+          # لضمان عدم وجود تكرار أو تداخل
+          sed -i '' '/@interface/d' "SHADOW MASTER v11.m" || true
+          sed -i '' '/@end/d' "SHADOW MASTER v11.m" || true
+          sed -i '' '/@implementation/d' "SHADOW MASTER v11.m" || true
+          
+          # إضافة الهيدر الجديد و الـ implementation الصحيحة في بداية الملف
+          echo '#import "ShadowGlobal.h"' > temp.m
+          echo '@implementation ShadowMasterCore' >> temp.m
+          cat "SHADOW MASTER v11.m" >> temp.m
+          echo '@end' >> temp.m
+          mv temp.m "SHADOW MASTER v11.m"
+
+          echo "🔧 Correcting Swizzling Class Reference..."
           sed -i '' 's/Class class = \[self class\];/Class cls = \[self class\];/g' "SHADOW MASTER v11.m" || true
           sed -i '' 's/class_getInstanceMethod(class,/class_getInstanceMethod(cls,/g' "SHADOW MASTER v11.m" || true
           sed -i '' 's/class_addMethod(class,/class_addMethod(cls,/g' "SHADOW MASTER v11.m" || true
@@ -56,7 +87,6 @@ jobs:
           mkdir -p output
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 
-          # بناء الـ dylib مع التأكد من الأعلام (Flags) الصحيحة
           clang++ -arch arm64 \
             -dynamiclib \
             -x objective-c++ \
@@ -92,5 +122,5 @@ jobs:
       - name: 📦 Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster_Pro_Build
+          name: ShadowMaster_Pro_Final_Build
           path: output/ShadowMaster.dylib
