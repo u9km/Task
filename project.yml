@@ -1,12 +1,20 @@
 name: ShadowMasterProject
+options:
+  bundleIdPrefix: com.shadow.v11
 targets:
   ShadowMaster:
     type: library.dynamic
     platform: iOS
     deploymentTarget: "14.0"
     sources:
-      - "SHADOW MASTER v11.m"
-      - "ShadowUI.m"
+      - path: "SHADOW MASTER v11.m"
+    frameworks:
+      - framework: Foundation.framework
+      - framework: UIKit.framework
+      - framework: CoreML.framework
     settings:
+      ENABLE_BITCODE: NO
       PRODUCT_NAME: ShadowMaster
       CLANG_ENABLE_OBJC_ARC: YES
+      WARNING_CFLAGS: "-Wno-everything"
+      OTHER_LDFLAGS: $(inherited) -undefined dynamic_lookup
