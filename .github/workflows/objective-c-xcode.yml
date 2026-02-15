@@ -19,9 +19,6 @@ jobs:
           #import <CoreML/CoreML.h>
           #import <objc/runtime.h>
 
-          @interface PlayerData : NSObject @end
-          @implementation PlayerData @end
-
           @interface ShadowMasterCore : NSObject
           + (instancetype)master;
           @end
@@ -43,16 +40,13 @@ jobs:
           }
           EOF
 
-      - name: Build Dylib (iPhoneSimulator SDK)
+      - name: Build Dylib (Correct Way)
         run: |
           mkdir -p output
 
-          SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
-
-          clang -dynamiclib ShadowMaster.m \
-            -isysroot $SDK \
-            -sdk iphonesimulator \
+          xcrun --sdk iphonesimulator clang \
             -arch arm64 \
+            -dynamiclib ShadowMaster.m \
             -framework Foundation \
             -framework UIKit \
             -framework CoreML \
