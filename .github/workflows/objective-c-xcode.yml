@@ -13,7 +13,7 @@ jobs:
 
       - name: Create Source File
         run: |
-          cat <<EOF > "ShadowMaster.m"
+          cat <<EOF > ShadowMaster.m
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
           #import <CoreML/CoreML.h>
@@ -21,45 +21,6 @@ jobs:
 
           @interface PlayerData : NSObject @end
           @implementation PlayerData @end
-
-          @interface AimData : NSObject @end
-          @implementation AimData @end
-
-          @interface MovementData : NSObject @end
-          @implementation MovementData @end
-
-          @interface VisionData : NSObject @end
-          @implementation VisionData @end
-
-          @interface PhysicsData : NSObject @end
-          @implementation PhysicsData @end
-
-          @interface MoveConstraints : NSObject @end
-          @implementation MoveConstraints @end
-
-          @interface ShotData : NSObject @end
-          @implementation ShotData @end
-
-          @interface CheatPrediction : NSObject @end
-          @implementation CheatPrediction @end
-
-          @interface MemoryExploiter : NSObject @end
-          @implementation MemoryExploiter @end
-
-          @interface BehaviorSpoofer : NSObject @end
-          @implementation BehaviorSpoofer @end
-
-          @interface NetworkManipulator : NSObject @end
-          @implementation NetworkManipulator @end
-
-          @interface AIEvader : NSObject @end
-          @implementation AIEvader @end
-
-          @interface ServerSpoofer : NSObject @end
-          @implementation ServerSpoofer @end
-
-          @interface HardwareSpoofer : NSObject @end
-          @implementation HardwareSpoofer @end
 
           @interface ShadowMasterCore : NSObject
           + (instancetype)master;
@@ -82,10 +43,16 @@ jobs:
           }
           EOF
 
-      - name: Build Dylib (No Signing Needed)
+      - name: Build Dylib (iPhoneSimulator SDK)
         run: |
           mkdir -p output
+
+          SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
+
           clang -dynamiclib ShadowMaster.m \
+            -isysroot $SDK \
+            -sdk iphonesimulator \
+            -arch arm64 \
             -framework Foundation \
             -framework UIKit \
             -framework CoreML \
