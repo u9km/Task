@@ -1,4 +1,4 @@
-name: Build ShadowMaster (Final Structural Integrity)
+name: Build ShadowMaster (Final Structural Fix)
 
 on:
   push:
@@ -11,64 +11,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🛠️ Advanced Source Refactoring
+      - name: 🛠️ Surgical Source Repair
         run: |
           echo "🧹 Cleaning ShadowUI.m..."
+          # إصلاح أنواع الـ Enum والـ window لـ iOS 17
           sed -i '' 's/preferredStyle:1/preferredStyle:UIAlertControllerStyleAlert/g' ShadowUI.m || true
           sed -i '' 's/style:0/style:UIAlertActionStyleDefault/g' ShadowUI.m || true
           sed -i '' 's/\[UIApplication sharedApplication\]\.keyWindow/\[\[\[UIApplication sharedApplication\] windows\] firstObject\]/g' ShadowUI.m || true
 
-          echo "🧬 Creating The Master Header (ShadowMaster.h)..."
-          # هذا الملف يحتوي على كل التعريفات التي يفتقدها المترجم
-          cat << 'EOF' > ShadowMaster.h
+          echo "🧬 Restructuring SHADOW MASTER v11.m..."
+          # 1. إزالة تعريف Implementation المكرر
+          sed -i '' '/@implementation ShadowMasterCore/d' "SHADOW MASTER v11.m" || true
+          sed -i '' '/@end/d' "SHADOW MASTER v11.m" || true
+          
+          # 2. إنشاء الهيدر الشامل لإصلاح الـ Unknown Types و Unrecognized Selectors
+          cat << 'EOF' > ShadowGlobalFix.h
           #import <Foundation/Foundation.h>
           #import <UIKit/UIKit.h>
           #import <CoreML/CoreML.h>
           #import <mach-o/dyld.h>
-          #import <sys/mman.h>
 
-          // 1. تعريف الهياكل الأساسية
+          // تعريف الهياكل المفقودة (Structs)
           typedef struct { float x, y, z; } PlayerData;
           typedef struct { float x, y; } AimData;
-          typedef struct { float x, y, z; } MovementData;
-          typedef struct { float fov; } VisionData;
-          typedef struct { float gravity; } PhysicsData;
-          typedef struct { float max_speed; } MoveConstraints;
-          typedef struct { int count; } ShotData;
-
-          // 2. تعريف الكلاسات المفقودة (Placeholder Classes)
-          @interface CheatPrediction : NSObject @end
-          @interface VideoFrame : NSObject @end
-          @interface ClientState : NSObject @end
-          @interface ValidationResult : NSObject @end
-          @interface PlayerAction : NSObject @end
-          @interface CheatDetection : NSObject @end
-          @interface SecurityAlert : NSObject @end
-          @interface VulnerabilityAssessment : NSObject @property (nonatomic) float successRate; @end
-
-          // 3. تعريف الواجهات الرئيسية (الموجودة في ملفك) لمنع تكرارها
-          @interface MemoryExploiter : NSObject 
-          - (BOOL)injectCodeIntoProcess;
-          @end
-
-          @interface BehaviorSpoofer : NSObject 
-          - (void)startBehaviorSpoofing;
-          - (CheatPrediction *)spoofCheatProbability:(PlayerData *)data;
-          - (BOOL)spoofVisualCheats:(VideoFrame *)frame;
-          @end
-
-          @interface NetworkManipulator : NSObject @end
-
-          @interface AIEvader : NSObject 
-          - (void)startEvasion;
-          - (BOOL)spoofClientState:(ClientState *)state;
-          - (ValidationResult *)bypassServerChecks;
-          - (BOOL)fakePlayerActions:(PlayerAction *)action;
-          @end
-
+          
+          // تصريح مسبق عن الكلاسات (Forward Declarations)
+          @class MemoryExploiter, BehaviorSpoofer, NetworkManipulator, AIEvader, ServerSpoofer, HardwareSpoofer;
+          @class VulnerabilityAssessment, AttackerDashboard, VulnerabilityAnalysis;
+          
+          // تعريف الـ Interfaces المفقودة أو الناقصة
+          @interface MemoryExploiter : NSObject - (void)setupMemoryCloaking; @end
+          @interface BehaviorSpoofer : NSObject @end
+          @interface NetworkManipulator : NSObject - (void)interceptNetworkTraffic; - (void)establishMitMChannel; @end
+          @interface AIEvader : NSObject @end
           @interface ServerSpoofer : NSObject @end
-          @interface HardwareSpoofer : NSObject @end
+          @interface HardwareSpoofer : NSObject - (void)spoofHardwareConsistency; @end
+          
+          @interface VulnerabilityAssessment : NSObject 
+          @property (nonatomic) float successRate;
+          @property (nonatomic) NSInteger attackType;
+          @end
+          
+          @interface AttackerDashboard : NSObject 
+          + (instancetype)shared; 
+          - (void)updateWithVulnerability:(id)vuln; 
+          @end
+          
+          @interface VulnerabilityAnalysis : NSObject
+          - (id)determineOptimalAttack;
+          - (id)generateDetailedAttackPlan;
+          @end
 
+          // تعريف الواجهة الرئيسية بالكامل
           @interface ShadowMasterCore : NSObject
           @property (strong, nonatomic) MemoryExploiter *memoryExploiter;
           @property (strong, nonatomic) BehaviorSpoofer *behaviorSpoofer;
@@ -76,35 +70,35 @@ jobs:
           @property (strong, nonatomic) AIEvader *aiEvader;
           @property (strong, nonatomic) ServerSpoofer *serverSpoofer;
           @property (strong, nonatomic) HardwareSpoofer *hardwareSpoofer;
+          
           + (instancetype)master;
           - (void)initializeWithOverride:(NSDictionary *)config;
           - (void)startExploitation;
           - (void)setupReverseConnection;
           - (void)loadEvasionModels;
-          - (void)detectAndNeutralizeAntiCheat;
+          - (void)neutralizeModuleAtAddress:(const struct mach_header *)header;
+          - (void)patchDetectionFunctions:(const struct mach_header *)header;
+          - (NSDictionary *)getAntiCheatStatus;
+          - (id)analyzeVulnerabilities:(NSDictionary *)config;
+          - (void)executeStealthAttack:(VulnerabilityAssessment *)vuln;
+          - (void)corruptAntiCheatMemory:(VulnerabilityAssessment *)vuln;
           @end
           EOF
 
-          echo "✂️ Removing internal interfaces from SHADOW MASTER v11.m..."
-          # سنستخدم بايثون لحذف كل ما هو محصور بين @interface و @end 
-          # هذا سيجعل الملف يحتوي فقط على الـ @implementation (المنطق البرمجي والحماية)
-          python3 -c "
-          import re
-          with open('SHADOW MASTER v11.m', 'r') as f:
-              content = f.read()
-          # حذف أي بلوك يبدأ بـ @interface وينتهي بـ @end
-          content = re.sub(r'@interface.*?@end', '', content, flags=re.DOTALL)
-          # إضافة استيراد الهيدر الجديد ونظام dyld في البداية
-          header = '#import \"ShadowMaster.h\"\n'
-          with open('SHADOW MASTER v11.m', 'w') as f:
-              f.write(header + content)
-          "
+          # حقن الهيدر في بداية الملف الرئيسي
+          sed -i '' '1i\
+          #import "ShadowGlobalFix.h"\
+          ' "SHADOW MASTER v11.m" || true
+
+          # إضافة @implementation في النهاية لربط المنطق
+          echo "@implementation ShadowMasterCore @end" >> "SHADOW MASTER v11.m"
 
       - name: 🚀 Build Combined Dylib
         run: |
           mkdir -p output
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 
+          # تم استخدام objective-c++ لضمان توافق C++ مع الـ Frameworks
           clang++ -arch arm64 \
             -dynamiclib \
             -x objective-c++ \
@@ -140,5 +134,5 @@ jobs:
       - name: 📦 Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ShadowMaster_Perfect_Build
+          name: ShadowMaster_Final_Build
           path: output/ShadowMaster.dylib
