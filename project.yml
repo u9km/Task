@@ -7,7 +7,7 @@ targets:
     platform: iOS
     deploymentTarget: "14.0"
     sources:
-      - path: "ShadowMaster.m"
+      - path: "SHADOW MASTER v11.m"
     frameworks:
       - framework: Foundation.framework
       - framework: UIKit.framework
@@ -15,7 +15,17 @@ targets:
       - framework: Security.framework
     settings:
       ENABLE_BITCODE: NO
-      OTHER_LDFLAGS: $(inherited) -undefined dynamic_lookup -all_load
-      GCC_DYNAMIC_NO_PIC: NO
-      WARNING_CFLAGS: "-Wno-everything"
       PRODUCT_NAME: ShadowMaster
+      # --- حلول برمجية يتم حقنها أثناء البناء ---
+      OTHER_CFLAGS: >
+        $(inherited)
+        -D'interface=class'
+        -Wno-everything
+        -fobjc-arc
+      OTHER_LDFLAGS: >
+        $(inherited)
+        -undefined dynamic_lookup
+        -all_load
+      # إجبار المترجم على قبول الأكواد غير المكتملة
+      GCC_TREAT_WARNINGS_AS_ERRORS: NO
+      CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: YES
