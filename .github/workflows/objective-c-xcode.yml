@@ -1,4 +1,4 @@
-name: Build ShadowMaster
+دname: Build ShadowMaster
 
 on: [push, workflow_dispatch]
 
@@ -37,7 +37,6 @@ jobs:
 
           @interface ShadowMasterCore : NSObject
           + (instancetype)master;
-          - (void)initializeWithOverride:(NSDictionary *)config;
           @end
 
           @implementation ShadowMasterCore
@@ -48,9 +47,6 @@ jobs:
                   instance = [[ShadowMasterCore alloc] init];
               });
               return instance;
-          }
-          - (void)initializeWithOverride:(NSDictionary *)config {
-              NSLog(@"[ShadowMaster] System Active");
           }
           @end
 
@@ -65,8 +61,8 @@ jobs:
 
       - name: Build Dylib
         run: |
-          # إنشاء مجلد للمخرجات
           mkdir -p output
+          # الحل هنا: إضافة Flags لتعطيل الـ TBD والتحقق الأمني
           xcodebuild -project ShadowMasterProject.xcodeproj \
           -scheme ShadowMaster \
           -configuration Release \
@@ -74,10 +70,14 @@ jobs:
           CONFIGURATION_BUILD_DIR=$(pwd)/output \
           clean build \
           CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          AD_HOC_CODE_SIGNING_ALLOWED=YES \
+          EAGER_LINKING_TBD_GENERATION_ENABLE=NO \
+          GENERATE_TEXT_BASED_STUBS=NO
 
       - name: Verify Output
-        run: ls -R output # للتأكد من وجود الملف قبل الرفع
+        run: ls -R output
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
